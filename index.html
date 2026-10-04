@@ -517,6 +517,7 @@ function alignRingToView(){
 const MUSIC_ID = "3Y02Y89mebE"; // ссылка на видео с музыкой (YouTube)
 const MUSIC_START = 50; // секунда начала воспроизведения
 let ytPlayer = null, ytReady = false;
+let musicStarted = false, wantMusic = false;
 const ytTag = document.createElement('script');
 ytTag.src = 'https://www.youtube.com/iframe_api';
 document.head.appendChild(ytTag);
@@ -525,7 +526,7 @@ window.onYouTubeIframeAPIReady = function(){
     width: 200, height: 200, videoId: MUSIC_ID,
     playerVars: { playsinline: 1, controls: 0, disablekb: 1, start: MUSIC_START },
     events: {
-      onReady: function(){ ytReady = true; },
+      onReady: function(){ ytReady = true; if (wantMusic) startMusic(); },
       onStateChange: function(e){
         // когда видео закончилось, начинаем заново с той же секунды
         if (e.data === YT.PlayerState.ENDED){
@@ -537,10 +538,14 @@ window.onYouTubeIframeAPIReady = function(){
   });
 };
 function startMusic(){
+  if (musicStarted) return;
   if (ytPlayer && ytReady){
+    musicStarted = true;
     ytPlayer.setVolume(60);
     ytPlayer.seekTo(MUSIC_START, true);
     ytPlayer.playVideo();
+  } else {
+    wantMusic = true;
   }
 }
 </script>
@@ -578,6 +583,7 @@ function startMusic(){
   function openEnvelope(){
     if (opened) return;
     opened = true;
+    startMusic();
     env.classList.add('open');
     tap.classList.add('hide');
     setTimeout(function(){ intro.classList.add('step2'); }, 2100);
