@@ -14,7 +14,8 @@ window.GIFT = {
     "я люблю женкууууу,люблююю женку больше всех на свете ))))\n Пусть этот подарок будет маленьким, но от всего сердца. Знаешь, мир вокруг может быть сильно шумным, непредсказуемым и хаотичным, но когда ты рядом или когда я просто думаю о тебе, внутри меня наступает абсолютный покой))) и невероятное счастьеее))) женка,ты моё тепло и моя самая чистая раааадость ты способна осветить даже самый пасмурный день в моей жизни))), а твой голос расстопит все мои проблемы и тревоги и беспокойство))) я люблю тебя, моя любимая женка, и хочу, чтобы ты всегда была счастлива)))",
     "люблю тебя безумно, бесконечно, больше всех на свете! Для меня нет никого ближе, важнее и дороже, чем ты. Ты моя самая красивая, моя самая сладкая, моя самая любимая женка на всей планете. Я хочу, чтобы ты всегда чувствовала, как сильно я тобой дорожу, как трепетно храню каждую нашу секунду и как сильно боюсь потерять тебя(((.",
     "И я обещаю тебе женка: моя любовь к тебе не закончится никогда! Ни через год, ни через десятки лет, ни в этой жизни, ни в какой-либо другой вселенной, Я буду любить тебя вечность, я буду делать всеее ,чтобы твои прекрасные глазки сияли только от счастья, смотря на меня)))).",
-    "Ты моё всё))) Навсегда и только твой Котик))))❤️❤️❤️"
+    "Ты моё всё))) Навсегда и только твой Котик))))❤️❤️❤️",
+    "Полюбуйся, какие тут звезды,небо, луна, сердечки, но все равно ничто по сравнению с тем, как ты сияешь в моих глазах))))"
   ]
 };
 </script>
@@ -511,6 +512,39 @@ function alignRingToView(){
 
 <div id="hint">Поворачивайся вокруг себя: текст расположен по кругу</div>
 
+<div id="yt" style="position:fixed;left:-300px;top:0;width:200px;height:200px;pointer-events:none"></div>
+<script>
+const MUSIC_ID = "3Y02Y89mebE"; // ссылка на видео с музыкой (YouTube)
+const MUSIC_START = 50; // секунда начала воспроизведения
+let ytPlayer = null, ytReady = false;
+const ytTag = document.createElement('script');
+ytTag.src = 'https://www.youtube.com/iframe_api';
+document.head.appendChild(ytTag);
+window.onYouTubeIframeAPIReady = function(){
+  ytPlayer = new YT.Player('yt', {
+    width: 200, height: 200, videoId: MUSIC_ID,
+    playerVars: { playsinline: 1, controls: 0, disablekb: 1, start: MUSIC_START },
+    events: {
+      onReady: function(){ ytReady = true; },
+      onStateChange: function(e){
+        // когда видео закончилось, начинаем заново с той же секунды
+        if (e.data === YT.PlayerState.ENDED){
+          ytPlayer.seekTo(MUSIC_START, true);
+          ytPlayer.playVideo();
+        }
+      }
+    }
+  });
+};
+function startMusic(){
+  if (ytPlayer && ytReady){
+    ytPlayer.setVolume(60);
+    ytPlayer.seekTo(MUSIC_START, true);
+    ytPlayer.playVideo();
+  }
+}
+</script>
+
 <script>
 (function(){
   document.getElementById('from').textContent = (window.GIFT && window.GIFT.from) || '';
@@ -564,6 +598,7 @@ function alignRingToView(){
   }
 
   document.getElementById('open-gift').addEventListener('click', function(){
+    startMusic();
     askMotion().then(function(){
       setTimeout(alignRingToView, 250);
       intro.classList.add('gone');
