@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Подарок</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Marck+Script&display=swap" rel="stylesheet">
+<script>
+window.GIFT = {
+  from: "от Котика)))) (прости, что так поздно, я не успел к 26.9.26 , но лучьше поздно, чем никогда, да?)))",
+  pages: [
+    "я люблю женкууууу,люблююю женку больше всех на свете ))))\n Пусть этот подарок будет маленьким, но от всего сердца. Знаешь, мир вокруг может быть сильно шумным, непредсказуемым и хаотичным, но когда ты рядом или когда я просто думаю о тебе, внутри меня наступает абсолютный покой))) и невероятное счастьеее))) женка,ты моё тепло и моя самая чистая раааадость ты способна осветить даже самый пасмурный день в моей жизни))), а твой голос расстопит все мои проблемы и тревоги и беспокойство))) я люблю тебя, моя любимая женка, и хочу, чтобы ты всегда была счастлива)))",
+    "люблю тебя безумно, бесконечно, больше всех на свете! Для меня нет никого ближе, важнее и дороже, чем ты. Ты моя самая красивая, моя самая сладкая, моя самая любимая женка на всей планете. Я хочу, чтобы ты всегда чувствовала, как сильно я тобой дорожу, как трепетно храню каждую нашу секунду и как сильно боюсь потерять тебя(((.",
+    "И я обещаю тебе женка: моя любовь к тебе не закончится никогда! Ни через год, ни через десятки лет, ни в этой жизни, ни в какой-либо другой вселенной, Я буду любить тебя вечность, я буду делать всеее ,чтобы твои прекрасные глазки сияли только от счастья, смотря на меня)))).",
+    "Ты моё всё))) Навсегда и только твой Котик))))❤️❤️❤️"
+  ]
+};
+</script>
+
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+<script>
+const THREE = AFRAME.THREE;
+
+function rng(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function heartPath(ctx, x, y, s){
+  ctx.beginPath();
+  ctx.moveTo(x, y + s * 0.9);
+  ctx.bezierCurveTo(x - s * 1.4, y + s * 0.1, x - s * 1.2, y - s * 0.9, x, y - s * 0.4);
+  ctx.bezierCurveTo(x + s * 1.2, y - s * 0.9, x + s * 1.4, y + s * 0.1, x, y + s * 0.9);
+  ctx.closePath();
+}
+
+function srgb(tex){
+  if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/* ---------- ночное небо: звёзды, луна, горы (360°) ---------- */
+AFRAME.registerComponent('night-sky', {
+  init: function(){
+    const W = 4096, H = 2048;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const r = rng(7);
+
+    // небо
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0.00, '#04061a');
+    sky.addColorStop(0.30, '#090e30');
+    sky.addColorStop(0.46, '#1a1a55');
+    sky.addColorStop(0.54, '#3d2c72');
+    sky.addColorStop(1.00, '#0a0d26');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+
+    // млечный путь
+    for (let i = 0; i < 16; i++){
+      const x = r() * W;
+      const y = H * 0.22 + Math.sin(x / W * Math.PI * 2 + 1) * H * 0.07;
+      const rad = 260 + r() * 260;
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, 'rgba(150,160,255,0.07)');
+      gr.addColorStop(1, 'rgba(150,160,255,0)');
+      g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    for (let i = 0; i < 7000; i++){
+      const x = r() * W;
+      const band = H * 0.22 + Math.sin(x / W * Math.PI * 2 + 1) * H * 0.07;
+      const y = band + (r() + r() + r() - 1.5) * H * 0.08;
+      g.fillStyle = 'rgba(200,210,255,' + (r() * 0.35) + ')';
+      g.beginPath(); g.arc(x, y, r() * 1.2 + 0.2, 0, 7); g.fill();
+    }
+
+    // звёзды
+    const tints = ['255,255,255', '255,244,214', '205,220,255'];
+    for (let i = 0; i < 2600; i++){
+      const x = r() * W, y = Math.pow(r(), 0.85) * H * 0.5;
+      const s = r() * 1.6 + 0.4;
+      g.fillStyle = 'rgba(' + tints[(r() * 3) | 0] + ',' + (0.4 + r() * 0.6) + ')';
+      g.beginPath(); g.arc(x, y, s, 0, 7); g.fill();
+    }
+    for (let i = 0; i < 70; i++){
+      const x = r() * W, y = r() * H * 0.45, s = 5 + r() * 9;
+      const gr = g.createRadialGradient(x, y, 0, x, y, s * 2.4);
+      gr.addColorStop(0, 'rgba(255,250,230,0.95)');
+      gr.addColorStop(1, 'rgba(255,250,230,0)');
+      g.fillStyle = gr; g.fillRect(x - s * 3, y - s * 3, s * 6, s * 6);
+      g.strokeStyle = 'rgba(255,250,230,0.45)'; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(x - s * 2, y); g.lineTo(x + s * 2, y);
+      g.moveTo(x, y - s * 2); g.lineTo(x, y + s * 2); g.stroke();
+    }
+
+    // луна
+    const mx = W * 0.72, my = H * 0.27;
+    const halo = g.createRadialGradient(mx, my, 40, mx, my, 460);
+    halo.addColorStop(0, 'rgba(255,240,200,0.38)');
+    halo.addColorStop(1, 'rgba(255,240,200,0)');
+    g.fillStyle = halo; g.fillRect(mx - 480, my - 480, 960, 960);
+    g.fillStyle = '#fff6d8';
+    g.beginPath(); g.arc(mx, my, 95, 0, 7); g.fill();
+    g.fillStyle = 'rgba(190,175,130,0.28)';
+    [[-30, -20, 22], [28, 18, 28], [-8, 40, 14], [38, -34, 12]].forEach(function(k){
+      g.beginPath(); g.arc(mx + k[0], my + k[1], k[2], 0, 7); g.fill();
+    });
+
+    // горы: целые частоты синусов => панорама без шва
+    function layer(base, amp, ks, seed, top, bot){
+      const rr = rng(seed);
+      const ph = ks.map(function(){ return rr() * 6.283; });
+      const am = ks.map(function(_, i){ return 1 / (1 + i * 0.55); });
+      const S = am.reduce(function(a, b){ return a + b; }, 0);
+      function f(x){
+        let s = 0;
+        for (let i = 0; i < ks.length; i++) s += am[i] * Math.sin(ks[i] * 6.2832 * x / W + ph[i]);
+        return base - amp * (0.5 + 0.5 * s / S);
+      }
+      const gr = g.createLinearGradient(0, base - amp, 0, base + 120);
+      gr.addColorStop(0, top); gr.addColorStop(1, bot);
+      g.fillStyle = gr;
+      g.beginPath(); g.moveTo(0, H);
+      for (let x = 0; x <= W; x += 4) g.lineTo(x, f(x));
+      g.lineTo(W, H); g.closePath(); g.fill();
+      return f;
+    }
+    layer(1060, 270, [2, 3, 4, 7, 13, 23], 11, '#34357f', '#171b4d');
+    layer(1105, 210, [3, 5, 8, 14, 26], 23, '#232869', '#10153a');
+    layer(1145, 150, [4, 6, 11, 19, 33], 37, '#171d4e', '#0a0e2b');
+    const front = layer(1195, 70, [3, 5, 9, 17, 31], 41, '#0b0f2c', '#04051a');
+
+    // ёлки
+    const rt = rng(99);
+    g.fillStyle = '#03040f';
+    for (let x = 0; x < W; x += 20 + rt() * 34){
+      const y = front(x) + 6, h = 70 + rt() * 90, w = h * 0.34;
+      for (let k = 0; k < 3; k++){
+        const yy = y - h * (0.22 + k * 0.3), ww = w * (1 - k * 0.27);
+        g.beginPath();
+        g.moveTo(x, yy - h * 0.42); g.lineTo(x - ww, yy + h * 0.14); g.lineTo(x + ww, yy + h * 0.14);
+        g.closePath(); g.fill();
+      }
+      g.fillRect(x - 2, y - h * 0.1, 4, h * 0.14);
+    }
+
+    const tex = srgb(new THREE.CanvasTexture(c));
+    tex.anisotropy = 4;
+    const geo = new THREE.SphereGeometry(50, 64, 40);
+    geo.scale(-1, 1, 1);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+    this.el.setObject3D('mesh', mesh);
+  }
+});
+
+/* ---------- мерцающие звёзды поверх неба ---------- */
+AFRAME.registerComponent('twinkle', {
+  init: function(){
+    const dot = document.createElement('canvas');
+    dot.width = dot.height = 64;
+    const d = dot.getContext('2d');
+    const gr = d.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(0.3, 'rgba(255,248,225,0.7)');
+    gr.addColorStop(1, 'rgba(255,248,225,0)');
+    d.fillStyle = gr; d.fillRect(0, 0, 64, 64);
+    const map = srgb(new THREE.CanvasTexture(dot));
+    const r = rng(5);
+    this.mats = [];
+    for (let k = 0; k < 3; k++){
+      const n = 140, pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++){
+        const az = r() * 6.2832, el = (4 + r() * 76) * Math.PI / 180, R = 47;
+        pos[i * 3] = R * Math.cos(el) * Math.sin(az);
+        pos[i * 3 + 1] = R * Math.sin(el);
+        pos[i * 3 + 2] = R * Math.cos(el) * Math.cos(az);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        size: 6, sizeAttenuation: false, map: map, transparent: true,
+        depthWrite: false, fog: false, opacity: 0.8
+      });
+      mat.userData = { speed: 0.8 + r() * 1.4, phase: r() * 6 };
+      this.mats.push(mat);
+      this.el.object3D.add(new THREE.Points(geo, mat));
+    }
+  },
+  tick: function(t){
+    this.mats.forEach(function(m){
+      m.opacity = 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(t / 1000 * m.userData.speed + m.userData.phase));
+    });
+  }
+});
+
+/* ---------- плывущие вверх сердечки ---------- */
+AFRAME.registerComponent('floating-hearts', {
+  init: function(){
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 20, 0, 110);
+    gr.addColorStop(0, '#ff9ab8'); gr.addColorStop(1, '#e0407a');
+    g.fillStyle = gr;
+    heartPath(g, 64, 62, 44);
+    g.fill();
+    const map = srgb(new THREE.CanvasTexture(c));
+    const r = rng(21);
+    this.items = [];
+    for (let i = 0; i < 34; i++){
+      const mat = new THREE.SpriteMaterial({ map: map, transparent: true, depthWrite: false, fog: false, opacity: 0 });
+      const s = new THREE.Sprite(mat);
+      const az = r() * 6.2832, rad = 4.6 + r() * 5.5, size = 0.22 + r() * 0.34;
+      s.scale.set(size, size, 1);
+      const item = { s: s, az: az, rad: rad, y: r() * 7, v: 0.12 + r() * 0.28, sw: r() * 6, size: size };
+      s.position.set(Math.sin(az) * rad, item.y, Math.cos(az) * rad);
+      this.items.push(item);
+      this.el.object3D.add(s);
+    }
+  },
+  tick: function(t, dt){
+    const sec = dt / 1000;
+    this.items.forEach(function(it){
+      it.y += it.v * sec;
+      if (it.y > 7.5) it.y = -0.5;
+      const sway = Math.sin(t / 1400 + it.sw) * 0.25;
+      it.s.position.set(Math.sin(it.az) * it.rad + sway, it.y, Math.cos(it.az) * it.rad);
+      it.s.material.opacity = 0.7 * Math.min(1, Math.max(0, it.y + 0.5)) * Math.min(1, (7.5 - it.y) / 1.5);
+    });
+  }
+});
+
+/* ---------- кольцо с текстом вокруг зрителя ---------- */
+AFRAME.registerComponent('text-ring', {
+  init: function(){
+    this.group = new THREE.Group();
+    this.el.setObject3D('ring', this.group);
+    const self = this;
+    const build = function(){ self.build(); };
+    if (document.fonts && document.fonts.load){
+      Promise.all([
+        document.fonts.load('500 44px Lora', 'Привет мир'),
+        document.fonts.load('44px "Marck Script"', 'Привет мир')
+      ]).then(build, build);
+    } else build();
+  },
+  drawPage: function(text, i, n){
+    const S = 1024;
+    const c = document.createElement('canvas');
+    c.width = c.height = S;
+    const g = c.getContext('2d');
+
+    // панель
+    g.beginPath();
+    if (g.roundRect) g.roundRect(36, 36, S - 72, S - 72, 64); else g.rect(36, 36, S - 72, S - 72);
+    g.fillStyle = 'rgba(11,15,46,0.80)'; g.fill();
+    g.lineWidth = 3; g.strokeStyle = 'rgba(246,236,208,0.35)'; g.stroke();
+
+    // сердечко сверху
+    g.fillStyle = '#ff7aa5';
+    heartPath(g, S / 2, 104, 17); g.fill();
+
+    // подбор размера шрифта
+    const maxW = S - 220, areaTop = 150, areaBottom = S - 170;
+    const maxH = areaBottom - areaTop;
+    let fs = 58, lines;
+    const paragraphs = text.split('\n');
+    for (; fs >= 28; fs -= 2){
+      g.font = '500 ' + fs + 'px Lora, Georgia, serif';
+      lines = [];
+      paragraphs.forEach(function(p, pi){
+        const words = p.split(/\s+/); let cur = '';
+        words.forEach(function(w){
+          const test = cur ? cur + ' ' + w : w;
+          if (g.measureText(test).width > maxW && cur){ lines.push(cur); cur = w; } else cur = test;
+        });
+        lines.push(cur);
+        if (pi < paragraphs.length - 1) lines.push('');
+      });
+      const lh = fs * 1.38;
+      if (lines.length * lh <= maxH) break;
+    }
+    const lh = fs * 1.38;
+    let y = areaTop + (maxH - lines.length * lh) / 2 + lh * 0.75;
+    g.textAlign = 'center';
+    g.fillStyle = '#f6ecd0';
+    g.shadowColor = 'rgba(255,220,160,0.35)'; g.shadowBlur = 12;
+    lines.forEach(function(l){ g.fillText(l, S / 2, y); y += lh; });
+    g.shadowBlur = 0;
+
+    // номер страницы
+    g.fillStyle = 'rgba(255,160,190,0.95)';
+    g.font = '40px "Marck Script", cursive';
+    g.fillText((i + 1) + ' / ' + n, S / 2, S - 92);
+
+    // стрелка «дальше» справа или сердце на последней
+    if (i < n - 1){
+      g.strokeStyle = 'rgba(255,160,190,0.9)'; g.lineWidth = 7; g.lineCap = 'round'; g.lineJoin = 'round';
+      g.beginPath(); g.moveTo(S - 92, S / 2 - 30); g.lineTo(S - 68, S / 2); g.lineTo(S - 92, S / 2 + 30); g.stroke();
+    } else {
+      g.fillStyle = '#ff7aa5';
+      heartPath(g, S - 80, S / 2, 18); g.fill();
+    }
+    return c;
+  },
+  build: function(){
+    const pages = (window.GIFT && window.GIFT.pages) || [];
+    const n = pages.length;
+    if (!n) return;
+    const R = 3.2, Y = 1.6;
+    const step = 360 / n;
+    const size = Math.min(3.0, 2 * R * Math.tan(step * Math.PI / 360) * 0.92);
+    for (let i = 0; i < n; i++){
+      const tex = srgb(new THREE.CanvasTexture(this.drawPage(pages[i], i, n)));
+      tex.anisotropy = 8;
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+      );
+      const th = -i * step * Math.PI / 180;      // дальше = вправо
+      m.position.set(-R * Math.sin(th), Y, -R * Math.cos(th));
+      m.rotation.y = th;
+      this.group.add(m);
+    }
+  }
+});
+
+/* первая страница появляется там, куда телефон смотрит в момент открытия */
+function alignRingToView(){
+  const cam = document.querySelector('#cam');
+  const ring = document.querySelector('#ring');
+  if (!cam || !ring || !ring.components['text-ring']) return;
+  const camObj = cam.getObject3D('camera');
+  if (!camObj) return;
+  const dir = new THREE.Vector3();
+  camObj.getWorldDirection(dir);
+  ring.components['text-ring'].group.rotation.y = Math.atan2(-dir.x, -dir.z);
+}
+</script>
+
+<style>
+  :root{
+    --night:#070a22; --deep:#0f1540; --moon:#f6ecd0; --rose:#ff7aa5; --rose-deep:#e0407a; --lav:#b9a9ff;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; background:var(--night); overflow:hidden; }
+  body{ font-family:'Lora', Georgia, serif; color:var(--moon); }
+
+  /* ---- вступление (конверт + кнопка) ---- */
+  #intro{
+    position:fixed; inset:0; z-index:100;
+    background:radial-gradient(120% 90% at 50% 100%, #2b2160 0%, #0f1540 45%, #060820 100%);
+    transition:opacity 1.8s ease; overflow:hidden;
+  }
+  #intro.gone{ opacity:0; pointer-events:none; }
+  #sky-dots, #sky-hearts{ position:absolute; inset:0; pointer-events:none; }
+  .dot{ position:absolute; border-radius:50%; background:#fff; animation:tw 3s ease-in-out infinite; }
+  @keyframes tw{ 0%,100%{opacity:.15} 50%{opacity:.95} }
+  .hrt{ position:absolute; bottom:-40px; color:var(--rose); opacity:0; animation:rise linear infinite; }
+  @keyframes rise{
+    0%{ transform:translateY(0) translateX(0); opacity:0; }
+    12%{ opacity:.55; }
+    100%{ transform:translateY(-110vh) translateX(18px); opacity:0; }
+  }
+  .moon-css{
+    position:absolute; top:9%; right:12%; width:64px; height:64px; border-radius:50%;
+    background:#fff6d8; box-shadow:0 0 60px 20px rgba(255,240,200,.28);
+  }
+
+  .stage{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:28px; padding:24px; text-align:center; transition:opacity 1s ease;
+  }
+  #stage2{ opacity:0; pointer-events:none; }
+  #intro.step2 #stage1{ opacity:0; pointer-events:none; }
+  #intro.step2 #stage2{ opacity:1; pointer-events:auto; }
+
+  /* конверт */
+  .env-wrap{ perspective:1100px; }
+  .env{
+    position:relative; width:min(80vw, 360px); aspect-ratio:3/2; cursor:pointer;
+    filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));
+    animation:bob 4s ease-in-out infinite;
+  }
+  .env.open{ animation:none; cursor:default; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-8px) } }
+  .env-back{ position:absolute; inset:0; background:#2a2f78; border-radius:8px; z-index:0; }
+  .letter{
+    position:absolute; left:7%; right:7%; top:8%; bottom:6%; z-index:1; border-radius:6px;
+    background:linear-gradient(#fbf3dc,#efe1bb); transition:transform .9s ease .55s;
+    display:flex; flex-direction:column; justify-content:center; gap:10px; padding:0 14%;
+  }
+  .letter i{ display:block; height:5px; border-radius:3px; background:rgba(120,90,60,.22); }
+  .letter i:nth-child(2){ width:80% } .letter i:nth-child(3){ width:62% }
+  .env.open .letter{ transform:translateY(-52%); }
+  .env-front{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    background:
+      linear-gradient(#3a3f9a,#3a3f9a);
+    clip-path:polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%);
+    border-radius:8px;
+    opacity:0;
+  }
+  .env-pocket-l, .env-pocket-r, .env-pocket-b{ position:absolute; z-index:2; pointer-events:none; }
+  .env-pocket-l{ inset:0; background:#343a8c; clip-path:polygon(0 0, 52% 56%, 0 100%); border-radius:8px; }
+  .env-pocket-r{ inset:0; background:#343a8c; clip-path:polygon(100% 0, 48% 56%, 100% 100%); border-radius:8px; }
+  .env-pocket-b{ inset:0; background:#2d3280; clip-path:polygon(0 100%, 50% 44%, 100% 100%); border-radius:8px; }
+  .flap{
+    position:absolute; left:0; right:0; top:0; height:56%; z-index:3;
+    transform-origin:top center; transition:transform .8s ease, z-index 0s .4s;
+    background:linear-gradient(#444aa8,#383e92);
+    clip-path:polygon(0 0, 100% 0, 50% 100%);
+  }
+  .env.open .flap{ transform:rotateX(180deg); z-index:0; }
+  .seal{
+    position:absolute; left:50%; top:49%; z-index:4; transform:translate(-50%,-50%);
+    width:44px; height:44px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ff9ab8, #c92f6a);
+    display:grid; place-items:center; color:#fff; font-size:22px; transition:opacity .3s;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+  }
+  .env.open .seal{ opacity:0; }
+  .tap{ margin:0; font-size:18px; color:rgba(246,236,208,.8); transition:opacity .4s; }
+  .tap.hide{ opacity:0; }
+
+  /* карточка с названием */
+  .title{
+    font-family:'Marck Script', cursive; font-weight:400; margin:0;
+    font-size:clamp(46px, 14vw, 78px); line-height:1.05; color:var(--moon);
+    text-shadow:0 0 28px rgba(255,200,230,.45);
+  }
+  .from{ margin:0; font-size:20px; color:var(--lav); }
+  .heart-big{ font-size:44px; color:var(--rose); animation:beat 1.6s ease-in-out infinite; }
+  @keyframes beat{ 0%,100%{ transform:scale(1) } 12%{ transform:scale(1.18) } 24%{ transform:scale(1) } 36%{ transform:scale(1.12) } }
+  .btn{
+    font-family:'Lora', Georgia, serif; font-weight:500; font-size:22px; color:#fff;
+    border:0; border-radius:999px; padding:16px 38px; cursor:pointer;
+    background:linear-gradient(135deg, var(--rose), var(--rose-deep));
+    box-shadow:0 8px 30px rgba(224,64,122,.5), 0 0 0 1px rgba(255,255,255,.12) inset;
+    transition:transform .15s ease;
+  }
+  .btn:active{ transform:scale(.96); }
+  .btn:focus-visible, .env:focus-visible{ outline:3px solid var(--moon); outline-offset:4px; }
+
+  /* подсказка в 3D */
+  #hint{
+    position:fixed; left:50%; bottom:calc(28px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%);
+    z-index:50; max-width:86vw; text-align:center; font-size:18px; padding:12px 20px; border-radius:999px;
+    background:rgba(11,15,46,.7); border:1px solid rgba(246,236,208,.3);
+    opacity:0; transition:opacity 1s ease; pointer-events:none;
+  }
+  #hint.show{ opacity:1; }
+
+  @media (prefers-reduced-motion: reduce){
+    .dot,.hrt,.env,.heart-big{ animation:none; }
+  }
+</style>
+</head>
+<body>
+
+<a-scene
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  loading-screen="enabled: false"
+  renderer="antialias: true">
+
+  <a-entity night-sky></a-entity>
+  <a-entity twinkle></a-entity>
+  <a-entity floating-hearts></a-entity>
+  <a-entity id="ring" text-ring></a-entity>
+
+  <a-entity id="cam" camera="fov: 75" position="0 1.6 0"
+            look-controls="touchEnabled: true; magicWindowTrackingEnabled: true"
+            wasd-controls="enabled: false"></a-entity>
+</a-scene>
+
+<div id="intro">
+  <div id="sky-dots"></div>
+  <div class="moon-css"></div>
+  <div id="sky-hearts"></div>
+
+  <div class="stage" id="stage1">
+    <div class="env-wrap">
+      <div class="env" id="env" role="button" tabindex="0" aria-label="Открыть конверт">
+        <div class="env-back"></div>
+        <div class="letter"><i></i><i></i><i></i></div>
+        <div class="env-pocket-l"></div>
+        <div class="env-pocket-r"></div>
+        <div class="env-pocket-b"></div>
+        <div class="flap"></div>
+        <div class="seal">♥</div>
+      </div>
+    </div>
+    <p class="tap" id="tap">нажми на конверт</p>
+  </div>
+
+  <div class="stage" id="stage2">
+    <div class="heart-big">♥</div>
+    <h1 class="title">Подарок для Женки</h1>
+    <p class="from" id="from"></p>
+    <button class="btn" id="open-gift">Открыть подарок</button>
+  </div>
+</div>
+
+<div id="hint">Поворачивайся вокруг себя: текст расположен по кругу</div>
+
+<script>
+(function(){
+  document.getElementById('from').textContent = (window.GIFT && window.GIFT.from) || '';
+
+  // звёзды и сердечки на фоне вступления
+  const dots = document.getElementById('sky-dots');
+  for (let i = 0; i < 90; i++){
+    const d = document.createElement('div');
+    const s = Math.random() * 2.2 + 0.8;
+    d.className = 'dot';
+    d.style.cssText = 'left:' + Math.random() * 100 + '%;top:' + Math.random() * 75 + '%;width:' + s + 'px;height:' + s + 'px;' +
+      'animation-delay:' + (Math.random() * 3) + 's;animation-duration:' + (2 + Math.random() * 3) + 's';
+    dots.appendChild(d);
+  }
+  const hearts = document.getElementById('sky-hearts');
+  for (let i = 0; i < 16; i++){
+    const h = document.createElement('div');
+    h.className = 'hrt';
+    h.textContent = '♥';
+    h.style.cssText = 'left:' + Math.random() * 100 + '%;font-size:' + (14 + Math.random() * 22) + 'px;' +
+      'animation-duration:' + (9 + Math.random() * 9) + 's;animation-delay:' + (-Math.random() * 14) + 's';
+    hearts.appendChild(h);
+  }
+
+  const intro = document.getElementById('intro');
+  const env = document.getElementById('env');
+  const tap = document.getElementById('tap');
+  const hint = document.getElementById('hint');
+  let opened = false;
+
+  function openEnvelope(){
+    if (opened) return;
+    opened = true;
+    env.classList.add('open');
+    tap.classList.add('hide');
+    setTimeout(function(){ intro.classList.add('step2'); }, 2100);
+  }
+  env.addEventListener('click', openEnvelope);
+  env.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openEnvelope(); }
+  });
+
+  // доступ к гироскопу (iPhone спрашивает разрешение по нажатию)
+  function askMotion(){
+    const jobs = [];
+    try {
+      if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) jobs.push(DeviceMotionEvent.requestPermission());
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) jobs.push(DeviceOrientationEvent.requestPermission());
+    } catch (e) {}
+    return Promise.allSettled(jobs);
+  }
+
+  document.getElementById('open-gift').addEventListener('click', function(){
+    askMotion().then(function(){
+      setTimeout(alignRingToView, 250);
+      intro.classList.add('gone');
+      setTimeout(function(){ hint.classList.add('show'); }, 1600);
+      setTimeout(function(){ hint.classList.remove('show'); }, 9000);
+      setTimeout(function(){ intro.style.display = 'none'; }, 2000);
+    });
+  });
+})();
+</script>
+</body>
+</html>
